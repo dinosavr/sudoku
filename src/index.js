@@ -1,277 +1,232 @@
 module.exports = function solveSudoku(matrix) {
   // your solution
 
-
-
-  let possibleMovesNumbers = [...Array(10).keys()];
-  possibleMovesNumbers.shift();
-  this.possibleMovesNumbers = possibleMovesNumbers;
+  const sizeOfSudoku = 10;
+  const startTurnNumber = 1;
+  this.possibleMovesNumbers = [
+    ...Array(sizeOfSudoku + startTurnNumber).keys(),
+  ].slice(startTurnNumber);
   this.valueTurnMatrix = [];
   this.matrix = matrix;
+  let isGoodTurnDetect = true;
+  let numberOfAttempt = 0;
+  const limitNumberOfAttempt = 5;
 
-  let goodTurnDetect = true;
-  let i = 0;
+  while (isGoodTurnDetect) {
+    isGoodTurnDetect = getGoodTurn(this.matrix);
 
-  while (goodTurnDetect) {     
-    goodTurnDetect = getGoodTurn(this.matrix);
-
-    if (!goodTurnDetect) {
+    if (!isGoodTurnDetect) {
       createValueTurnMatrix(this.matrixPossibleMoves);
-      goodTurnDetect = getGoodTurn2(this.valueTurnMatrix);
-      // console.log("GT2: " + goodTurnDetect);
+      isGoodTurnDetect = getGoodTurn2(this.valueTurnMatrix);
     }
 
-    if (!goodTurnDetect) {
-      goodTurnDetect = checkSquareGoodTurn(this.valueTurnMatrix);;
-      // console.log("GT2: " + goodTurnDetect);
+    if (!isGoodTurnDetect) {
+      isGoodTurnDetect = checkSquareGoodTurn(this.valueTurnMatrix);
     }
 
-    if (!goodTurnDetect) {
-       goodTurnDetect = getGoodTurn3(this.matrixPossibleMoves);
-      // console.log("GT2: " + goodTurnDetect);
+    if (!isGoodTurnDetect) {
+      isGoodTurnDetect = getGoodTurn3(this.matrixPossibleMoves);
     }
 
-    if (!goodTurnDetect && i<5) {
-      goodTurnDetect = guessValue(this.matrixPossibleMoves);
-      i++;
-      // console.log("GT2: " + goodTurnDetect);
+    if (!isGoodTurnDetect && numberOfAttempt < limitNumberOfAttempt) {
+      isGoodTurnDetect = guessValue(this.matrixPossibleMoves);
+      numberOfAttempt++;
     }
-    //console.log("Matrix after ", i);
-    // console.log(this.matrix);
   }
-
-  // console.log(this.matrix);
-
-  // console.log();
-  //console.log(this.valueTurnMatrix[9]);
-  //console.log();
-  // getGoodTurn2(this.valueTurnMatrix);
-
-  // console.log();
-  //console.log(this.matrixPossibleMoves);
 
   return this.matrix;
-}
+};
 
 function createValueTurnMatrix(matrixPossibleMoves) {
-
-  let temp = [];
-  // console.log(this.possibleMovesNumbers.length);
-  for (let n = 1; n < this.possibleMovesNumbers.length + 1; n++) {
+  let tempArr = [];
+  for (
+    let moveNumber = 1;
+    moveNumber <= this.possibleMovesNumbers.length;
+    moveNumber++
+  ) {
     for (let i = 0; i < matrixPossibleMoves.length; i++) {
-      temp[i] = [];
+      tempArr[i] = [];
       for (let j = 0; j < matrixPossibleMoves.length; j++) {
         if (matrixPossibleMoves[i][j]) {
-
-          // let numberValueTurn = 6;
-          if (matrixPossibleMoves[i][j].includes(n)) temp[i][j] = n;
-          else temp[i][j] = 0;
-        }
-        else temp[i][j] = 0;
+          if (matrixPossibleMoves[i][j].includes(moveNumber))
+            tempArr[i][j] = moveNumber;
+          else tempArr[i][j] = 0;
+        } else tempArr[i][j] = 0;
       }
     }
-    this.valueTurnMatrix[n] = temp.slice();
-    // console.log(this.valueTurnMatrix[n]);
+    this.valueTurnMatrix[moveNumber] = tempArr.slice();
   }
-
 }
 
 function getGoodTurn(matrix) {
-
-  let temp = [];
-  let goodTurnDetect = false;
-  let matrixPossibleMoves = [];
+  let tempArr = [];
+  let isGoodTurnDetect = false;
+  let matrixPossibleMovesArr = [];
 
   for (let i = 0; i < matrix.length; i++) {
-    matrixPossibleMoves[i] = [];
+    matrixPossibleMovesArr[i] = [];
     for (let j = 0; j < matrix.length; j++) {
       if (!matrix[i][j]) {
-        temp = checkPossibleMoves(i, j, matrix);
+        tempArr = checkPossibleMoves(i, j, matrix);
+        matrixPossibleMovesArr[i][j] = tempArr;
+      } else matrixPossibleMovesArr[i][j] = 0;
 
-        /*         let numberValueTurn = 6;
-                if (temp.includes(numberValueTurn)) matrixPossibleMoves[i][j] = numberValueTurn;
-                else matrixPossibleMoves[i][j] = 0; */
-
-        matrixPossibleMoves[i][j] = temp;
+      if (tempArr.length == 1) {
+        this.matrix[i][j] = tempArr[0];
+        isGoodTurnDetect = true;
+        return isGoodTurnDetect;
       }
-      else matrixPossibleMoves[i][j] = 0;
-
-      if (temp.length == 1) {
-        console.log("GT1: Good turn detected", i, j, temp);
-        this.matrix[i][j] = temp[0];
-        goodTurnDetect = true;
-        // console.log("GT1: " + goodTurnDetect);
-        return goodTurnDetect;
-      }
-      temp = [];
+      tempArr = [];
     }
   }
 
-  this.matrixPossibleMoves = matrixPossibleMoves;
-  // console.log("GT1: " + goodTurnDetect);
-  return goodTurnDetect;
-
+  this.matrixPossibleMoves = matrixPossibleMovesArr;
+  return isGoodTurnDetect;
 }
 
 function checkPossibleMoves(row, column, matrix) {
-
   let rowNumbers = getRowNumbers(row, matrix);
   let columnNumbers = getColumnNumbers(column, matrix);
   let squareNumbers = getSquareNumbers(row, column, matrix);
   let usedNumbers = rowNumbers.concat(columnNumbers).concat(squareNumbers);
 
-  // console.log(usedNumbers);  
   let usedNumbersUniq = usedNumbers.filter(function (item, pos) {
-    return usedNumbers.indexOf(item) == pos;
-  })
-  /* console.log("checkPossibleMoves");
-  console.log(row, column, rowNumbers);
-  console.log(row, column, columnNumbers);
-  console.log(row, column, squareNumbers);
-  console.log(row, column, usedNumbersUniq);
-  console.log(); */
+    return usedNumbers.indexOf(item) === pos;
+  });
 
-  let freeNumbers = this.possibleMovesNumbers.filter(x => !usedNumbersUniq.includes(x));
-  // if (row < 3 && column < 3) console.log(row, column, freeNumbers);
+  let freeNumbers = this.possibleMovesNumbers.filter(
+    (number) => !usedNumbersUniq.includes(number)
+  );
 
   return freeNumbers;
-
 }
 
 function getGoodTurn2(valueTurnMatrix) {
-  let goodTurnDetect = false;
-  let matrix;
+  let isGoodTurnDetect = false;
+  let matrixArr = [];
 
-  // console.log(valueTurnMatrix[1]);
-
-  for (let n = 1; n < this.possibleMovesNumbers.length + 1; n++) {
-    matrix = valueTurnMatrix[n].slice();
-    // console.log("Neo tuk tuk");
-    // console.log(matrix);
-    for (let i = 0; i < matrix.length; i++) {
-      for (let j = 0; j < matrix.length; j++) {
-
-        if (matrix[i][j]) {
-          let rowNumbers = getRowNumbers(i, matrix);
-          let columnNumbers = getColumnNumbers(j, matrix);
+  for (
+    let number = 1;
+    number < this.possibleMovesNumbers.length + 1;
+    number++
+  ) {
+    matrixArr = valueTurnMatrix[number].slice();
+    for (let i = 0; i < matrixArr.length; i++) {
+      for (let j = 0; j < matrixArr.length; j++) {
+        if (matrixArr[i][j]) {
+          let rowNumbers = getRowNumbers(i, matrixArr);
+          let columnNumbers = getColumnNumbers(j, matrixArr);
 
           if (rowNumbers.length == 1 && columnNumbers.length == 1) {
-            console.log("Good turn 2 !!!");
-            console.log(i, j, matrix[i][j]);
-            this.matrix[i][j] = matrix[i][j];
-            goodTurnDetect = true
+            this.matrix[i][j] = matrixArr[i][j];
+            isGoodTurnDetect = true;
           }
         }
-
       }
     }
   }
-  return goodTurnDetect;
-
+  return isGoodTurnDetect;
 }
 
 function getGoodTurn3(matrixPossibleMoves) {
-  let goodTurnDetect = false;
-  let matrix;
-  let checkList = [];
-  let goodValue = [];
-  let revers = false;
-  let i2, j2, counter; 
+  let isGoodTurnDetect = false;
+  let matrixArr = [];
+  let checkListArr = [];
+  let goodValueArr = [];
+  let isRevers = false;
+  let i2, j2, counter;
 
-
-  // console.log(valueTurnMatrix[1]);
-
-  // for (let n = 1; n < this.possibleMovesNumbers.length + 1; n++) {
-  matrix = matrixPossibleMoves.slice();
-  console.log("Neo tuk tuk");
-  // console.log(matrix);
-  for (let i = 0; i < matrix.length; i++) {
-    for (let j = 0; j < matrix.length; j++) {
-
-      if(revers) {i2 = j; j2 = i; counter = i2}
-      else {i2 = i; j2 = j; counter = j2}
-     // if (goodValue.length > 0) console.log("****** Loop works ******", i, j, goodValue[0]);
-
-      if (matrix[i2][j2]) {               
-        // console.log(goodValue[0], matrix[i][j] , matrix[i][j].indexOf(goodValue[0]) ,(matrix[i][j].indexOf(goodValue[0]) > -1)); 
-        if (goodValue.length > 0 && (matrix[i2][j2].indexOf(goodValue[0]) > -1)) {
-          console.log("************** GoodValue detected2", i2, j2, goodValue, "Revers ", revers);
-          this.matrix[i2][j2] = goodValue[0];
-          goodTurnDetect = true;
-          return goodTurnDetect;
-        }
-        checkList = checkList.concat(matrix[i2][j2]);
+  matrixArr = matrixPossibleMoves.slice();
+  for (let i = 0; i < matrixArr.length; i++) {
+    for (let j = 0; j < matrixArr.length; j++) {
+      if (isRevers) {
+        i2 = j;
+        j2 = i;
+        counter = i2;
+      } else {
+        i2 = i;
+        j2 = j;
+        counter = j2;
       }
 
-      if (counter === matrix.length - 1 && goodValue.length < 1) {
-        // console.log("Checklist: ", revers, i2, j2, checkList);
-        goodValue = findDuplicatesValue(checkList);
-        if (goodValue.length > 0) {
-          // console.log("GoodValue detected 1", goodValue);
+      if (matrixArr[i2][j2]) {
+        if (
+          goodValueArr.length &&
+          matrixArr[i2][j2].indexOf(goodValueArr[0]) > -1
+        ) {
+          this.matrix[i2][j2] = goodValueArr[0];
+          isGoodTurnDetect = true;
+          return isGoodTurnDetect;
+        }
+        checkListArr = checkListArr.concat(matrixArr[i2][j2]);
+      }
+
+      // magic number
+      if (counter === matrixArr.length - 1 && goodValueArr.length < 1) {
+        goodValueArr = findDuplicatesValue(checkListArr);
+        if (goodValueArr.length) {
           j = -1;
         }
       }
     }
-    checkList = [];
-    goodValue = [];
-    //checkList = checkList.concat(matrix[i][j]);                      
+    checkListArr = [];
+    goodValueArr = [];
 
-    if (i === matrix.length - 1 && !revers) {i = -1; j = -1; revers = true;}
+    if (i === matrixArr.length - 1 && !isRevers) {
+      i = -1;
+      j = -1;
+      isRevers = true;
+    }
   }
-  // }
-  return goodTurnDetect;
-
+  return isGoodTurnDetect;
 }
 
-function guessValue(matrixPossibleMoves){
-  let goodTurnDetect = false;
+function guessValue(matrixPossibleMoves) {
+  let isGoodTurnDetect = false;
   let numberOptions = 2;
-  let up;
-  let matrix;
+  let isUp;
+  let matrixArr;
 
-  matrix = matrixPossibleMoves.slice();
-  for (let i = 0; i < matrix.length; i++) {
-    for (let j = 0; j < matrix.length; j++) {
-      if (matrix[i][j]) {               
-        if(matrix[i][j].length === numberOptions) {
-        console.log("guessValue", i, j, matrix[i][j][0]);
-        }
-          this.matrix[i][j] = matrix[i][j][0];
-          goodTurnDetect = true;
-          return goodTurnDetect;          
-    }        
-        if(matrix[i][j].length > numberOptions) up = true;                  
+  matrixArr = matrixPossibleMoves.slice();
+  for (let i = 0; i < matrixArr.length; i++) {
+    for (let j = 0; j < matrixArr.length; j++) {
+      if (matrixArr[i][j]) {
+        this.matrix[i][j] = matrixArr[i][j][0];
+        isGoodTurnDetect = true;
+        return isGoodTurnDetect;
+      }
+      if (matrixArr[i][j].length > numberOptions) isUp = true;
+    }
+    if (i == matrixArr.length - 1 && isUp) {
+      numberOptions++;
+      i = -1;
+      j = -1;
+      isUp = false;
+    }
   }
-  if(i == matrix.length - 1 && up)  {numberOptions++; i=-1; j=-1; up = false;}
-}
 
-  return goodTurnDetect;
+  return isGoodTurnDetect;
 }
 
 function findDuplicatesValue(arr) {
-  var sorted_arr = arr.slice().sort();
-  var results = [];
-  var duplicates = [];
-  for (var i = 0; i < sorted_arr.length - 1; i++) {
-    if (sorted_arr[i + 1] == sorted_arr[i]) {
-      duplicates.push(sorted_arr[i]);
+  var sortedArr = arr.slice().sort();
+  var resultsArr = [];
+  var duplicatesArr = [];
+  for (var i = 0; i < sortedArr.length - 1; i++) {
+    if (sortedArr[i + 1] == sortedArr[i]) {
+      duplicatesArr.push(sortedArr[i]);
     }
   }
-  //console.log("Start value: ", arr);
-  //console.log("Duplicates value: ", duplicates);
 
-  results = arr.filter(function (el) {
-    return duplicates.indexOf(el) < 0;
+  resultsArr = arr.filter(function (el) {
+    return duplicatesArr.indexOf(el) < 0;
   });
 
-  // console.log("Uniq value: ", results);
-
-  return results;
+  return resultsArr;
 }
 
 function checkSquareGoodTurn(matrix) {
-
-  let goodTurnDetect = false;
+  let isGoodTurnDetect = false;
   let arr = [];
 
   let countElementRowSquare = 3;
@@ -281,28 +236,36 @@ function checkSquareGoodTurn(matrix) {
     matrix = this.valueTurnMatrix[n];
     for (let k = 0; k < countElementRowSquare; k++) {
       for (let m = 0; m < countElementRowSquare; m++) {
-        for (let i = k * countElementRowSquare; i < (k + 1) * countElementRowSquare; i++) {
-          for (let j = m * countElementRowSquare; j < (m + 1) * countElementRowSquare; j++) {
-            if (matrix[i][j]) { arr.push(matrix[i][j]); iKey = i; jKey = j; }
+        for (
+          let i = k * countElementRowSquare;
+          i < (k + 1) * countElementRowSquare;
+          i++
+        ) {
+          for (
+            let j = m * countElementRowSquare;
+            j < (m + 1) * countElementRowSquare;
+            j++
+          ) {
+            if (matrix[i][j]) {
+              arr.push(matrix[i][j]);
+              iKey = i;
+              jKey = j;
+            }
           }
         }
-        // console.log(iKey, jKey, arr);
+
         if (arr.length == 1) {
           this.matrix[iKey][jKey] = matrix[iKey][jKey];
-          goodTurnDetect = true;
-          console.log("Get Good turn from square", iKey, jKey, matrix[iKey][jKey]);
-          return goodTurnDetect;
+          isGoodTurnDetect = true;
+          return isGoodTurnDetect;
         }
         arr = [];
-
       }
     }
   }
 
-
-  return goodTurnDetect;
+  return isGoodTurnDetect;
 }
-
 
 function getRowNumbers(row, matrix) {
   var arr = [];
@@ -323,7 +286,6 @@ function getColumnNumbers(column, matrix) {
 }
 
 function getSquareNumbers(row, column, matrix) {
-
   var arr = [];
 
   let countElementRowSquare = 3;
@@ -332,8 +294,16 @@ function getSquareNumbers(row, column, matrix) {
   let startRowElement = rowSquare * countElementRowSquare;
   let startColumnElement = columnSquare * countElementRowSquare;
 
-  for (let i = startRowElement; i < startRowElement + countElementRowSquare; i++) {
-    for (let j = startColumnElement; j < startColumnElement + countElementRowSquare; j++) {
+  for (
+    let i = startRowElement;
+    i < startRowElement + countElementRowSquare;
+    i++
+  ) {
+    for (
+      let j = startColumnElement;
+      j < startColumnElement + countElementRowSquare;
+      j++
+    ) {
       arr.push(matrix[i][j]);
     }
   }
@@ -344,7 +314,6 @@ function getSquareNumbers(row, column, matrix) {
 }
 
 function removeElementByValue(value, arr) {
-
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] === value) {
       arr.splice(i, 1);
