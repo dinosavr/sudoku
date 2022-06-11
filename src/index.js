@@ -1,10 +1,10 @@
 module.exports = function solveSudoku(matrix) {
   // your solution
 
-  const sizeOfSudoku = 10;
+  const maxNumberOfTurn = 9;
   const startTurnNumber = 1;
   this.possibleMovesNumbers = [
-    ...Array(sizeOfSudoku + startTurnNumber).keys(),
+    ...Array(maxNumberOfTurn + startTurnNumber).keys(),
   ].slice(startTurnNumber);
   this.valueTurnMatrix = [];
   this.matrix = matrix;
